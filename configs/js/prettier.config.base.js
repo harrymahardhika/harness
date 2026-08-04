@@ -1,4 +1,8 @@
-// Shared Prettier config base for Vue 3 + TypeScript / Laravel projects.
+// Shared Prettier config base for Vue 3 + TypeScript projects, matching
+// `vindo-app`'s actual `.prettierrc.json` exactly: no semicolons, single
+// quotes, 100 print width, no plugins. Tailwind classes are NOT
+// auto-sorted in this stack (no prettier-plugin-tailwindcss) — see
+// claude/vue/vue.md for why (class order is loosely grouped by hand).
 //
 // Exported as an object so a project spreads it and overrides selectively:
 //
@@ -7,33 +11,12 @@
 //
 //   export default {
 //     ...harnessBase,
-//     tabWidth: 4, // project-specific override
 //   }
 //
-// Requires (pnpm add -D): prettier, prettier-plugin-tailwindcss.
+// Requires (pnpm add -D): prettier.
 
 export default {
   semi: false,
   singleQuote: true,
-  trailingComma: 'all',
   printWidth: 100,
-  tabWidth: 2,
-  useTabs: false,
-  arrowParens: 'always',
-  bracketSpacing: true,
-  vueIndentScriptAndStyle: false,
-  endOfLine: 'lf',
-
-  // Sorts Tailwind classes into the canonical order automatically.
-  // https://github.com/tailwindlabs/prettier-plugin-tailwindcss
-  plugins: ['prettier-plugin-tailwindcss'],
-
-  overrides: [
-    {
-      files: '*.vue',
-      options: {
-        parser: 'vue',
-      },
-    },
-  ],
 }

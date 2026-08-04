@@ -27,9 +27,13 @@ README for the exact import syntax.
 - A task is not "done" until its tests pass. Never report a feature/fix as
   complete without having run the relevant test suite (Pest for PHP,
   Vitest for Vue/TS) and shown the passing output.
-- If you wrote or modified `.feature` files, there must be corresponding
-  Pest tests exercising those scenarios before the loop is considered
-  gated-complete — see `claude/agents/test-writer.md`.
+- `.feature` files are living documentation in some projects (e.g.
+  `analytics-api`, alongside `todo.md`), not a required source of Pest
+  tests in every project — most projects in this stack (e.g. `vindo-api`)
+  have no `.feature` files at all and are gated on plain Pest `it()`
+  tests instead. See `claude/agents/test-writer.md` for which mode
+  applies. Don't invent a `.feature`-to-Pest requirement for a project
+  that doesn't have one.
 - If tests fail, say so plainly with the actual failure output. Do not
   paraphrase a failure as a pass, and do not silently skip a failing test
   to reach "green."

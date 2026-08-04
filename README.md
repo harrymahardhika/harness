@@ -64,7 +64,7 @@ it does overwrite gets backed up to `<file>.bak` first.
 ```bash
 # from this repo
 bin/sync-config.sh /path/to/project laravel      # pint.json + rector-base.php
-bin/sync-config.sh /path/to/project vue           # eslint + prettier base configs
+bin/sync-config.sh /path/to/project vue           # eslint + prettier + oxlint base configs
 bin/sync-config.sh /path/to/project fullstack     # all of the above
 bin/sync-config.sh /path/to/project fullstack --dry-run   # preview only
 ```
@@ -79,7 +79,8 @@ return RectorConfig::configure()
 ```
 
 ```js
-// eslint.config.js
+// eslint.config.ts — copy harness/configs/js/oxlint.config.base.json to
+// .oxlintrc.json first (eslint-plugin-oxlint reads it from the project root)
 import harnessBase from './harness/configs/js/eslint.config.base.js'
 
 export default [...harnessBase, { rules: { /* project overrides */ } }]

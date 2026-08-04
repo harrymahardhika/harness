@@ -1,13 +1,19 @@
-// Shared ESLint flat config base for Vue 3 + TypeScript projects.
+// Shared ESLint flat config base for Vue 3 + TypeScript projects, mirroring
+// `vindo-app`'s actual `eslint.config.ts`: eslint-plugin-vue at the
+// `flat/essential` level (not recommended/strict), oxlint delegated a
+// category of fast rules via eslint-plugin-oxlint, and
+// eslint-config-prettier turning off any formatting-related rules since
+// Prettier owns formatting.
 //
-// Exported as an array so a project spreads it into its own flat config
-// and layers project-specific overrides after it:
+// Exported as an array so a project spreads it into its own flat config:
 //
-//   // eslint.config.js
+//   // eslint.config.ts
+//   import { globalIgnores } from 'eslint/config'
 //   import harnessBase from './harness/configs/js/eslint.config.base.js'
 //
 //   export default [
 //     ...harnessBase,
+//     globalIgnores(['src/components/ui/**']), // generated/vendored code
 //     {
 //       rules: {
 //         // project-specific overrides
@@ -15,47 +21,35 @@
 //     },
 //   ]
 //
-// Requires (pnpm add -D): eslint, typescript-eslint, eslint-plugin-vue,
-// vue-eslint-parser, @vue/eslint-config-typescript (peer of eslint-plugin-vue).
+// Requires (pnpm add -D): eslint, @vue/eslint-config-typescript,
+// eslint-plugin-vue, eslint-plugin-oxlint, oxlint, eslint-config-prettier.
+// eslint-plugin-oxlint also needs an `.oxlintrc.json` in the project root
+// (see configs/js/oxlint.config.base.json in this harness repo).
 
-import js from '@eslint/js'
+import { defineConfigWithVueTs, vueTsConfigs } from '@vue/eslint-config-typescript'
 import pluginVue from 'eslint-plugin-vue'
-import tseslint from 'typescript-eslint'
+import pluginOxlint from 'eslint-plugin-oxlint'
+import skipFormatting from 'eslint-config-prettier/flat'
 
-export default [
-  js.configs.recommended,
-  ...tseslint.configs.recommended,
-  ...pluginVue.configs['flat/recommended'],
+export default defineConfigWithVueTs(
   {
-    languageOptions: {
-      parserOptions: {
-        parser: tseslint.parser,
-        sourceType: 'module',
-        ecmaVersion: 'latest',
-      },
-    },
+    name: 'app/files-to-lint',
+    files: ['**/*.{vue,ts,mts,tsx}'],
+  },
+
+  ...pluginVue.configs['flat/essential'],
+  vueTsConfigs.recommended,
+  {
     rules: {
-      // Composition API only — see claude/vue/vue.md. These two catch the
-      // most common Options-API regressions.
-      'vue/no-deprecated-data-object-declaration': 'error',
-      'vue/component-api-style': ['error', ['script-setup']],
-
-      // `as const` over TS enums (see claude/vue/vue.md) — ESLint can't
-      // fully police "don't use enum", so this is enforced in review.
-      '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/no-unused-vars': [
-        'error',
-        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
-      ],
-      '@typescript-eslint/consistent-type-imports': 'error',
-
+      // Short/single-word component names are common here (shadcn-vue
+      // primitives, small app components) — matches vindo-app.
       'vue/multi-word-component-names': 'off',
-      'vue/require-default-prop': 'off',
-      'vue/attributes-order': 'warn',
-      'vue/no-unused-vars': 'error',
     },
   },
-  {
-    ignores: ['dist/**', 'node_modules/**', 'vendor/**', 'bootstrap/cache/**', '*.blade.php'],
-  },
-]
+
+  // Delegates a category of fast correctness rules to oxlint instead of
+  // duplicating them here — see .oxlintrc.json.
+  ...pluginOxlint.buildFromOxlintConfigFile('.oxlintrc.json'),
+
+  skipFormatting,
+)
