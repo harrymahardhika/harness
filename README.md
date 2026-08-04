@@ -18,7 +18,7 @@ harness/
 │   └── guard-destructive-bash.sh
 ├── configs/
 │   ├── php/                   # pint.json, rector-base.php
-│   └── js/                    # eslint.config.base.js, prettier.config.base.js
+│   └── ts/                    # eslint.config.base.ts, prettier.config.base.ts, oxlint.config.base.json
 ├── bin/sync-config.sh
 └── README.md
 ```
@@ -78,10 +78,10 @@ return RectorConfig::configure()
     ->withPaths([__DIR__ . '/app', __DIR__ . '/routes']);
 ```
 
-```js
-// eslint.config.ts — copy harness/configs/js/oxlint.config.base.json to
+```ts
+// eslint.config.ts — copy harness/configs/ts/oxlint.config.base.json to
 // .oxlintrc.json first (eslint-plugin-oxlint reads it from the project root)
-import harnessBase from './harness/configs/js/eslint.config.base.js'
+import harnessBase from './harness/configs/ts/eslint.config.base.ts'
 
 export default [...harnessBase, { rules: { /* project overrides */ } }]
 ```

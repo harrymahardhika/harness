@@ -9,7 +9,7 @@
 //
 //   // eslint.config.ts
 //   import { globalIgnores } from 'eslint/config'
-//   import harnessBase from './harness/configs/js/eslint.config.base.js'
+//   import harnessBase from './harness/configs/ts/eslint.config.base.ts'
 //
 //   export default [
 //     ...harnessBase,
@@ -24,7 +24,7 @@
 // Requires (pnpm add -D): eslint, @vue/eslint-config-typescript,
 // eslint-plugin-vue, eslint-plugin-oxlint, oxlint, eslint-config-prettier.
 // eslint-plugin-oxlint also needs an `.oxlintrc.json` in the project root
-// (see configs/js/oxlint.config.base.json in this harness repo).
+// (see configs/ts/oxlint.config.base.json in this harness repo).
 
 import { defineConfigWithVueTs, vueTsConfigs } from '@vue/eslint-config-typescript'
 import pluginVue from 'eslint-plugin-vue'

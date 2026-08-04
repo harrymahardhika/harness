@@ -6,8 +6,8 @@
 //
 // Exported as an object so a project spreads it and overrides selectively:
 //
-//   // prettier.config.js
-//   import harnessBase from './harness/configs/js/prettier.config.base.js'
+//   // prettier.config.ts
+//   import harnessBase from './harness/configs/ts/prettier.config.base.ts'
 //
 //   export default {
 //     ...harnessBase,
@@ -15,8 +15,10 @@
 //
 // Requires (pnpm add -D): prettier.
 
+import type { Config } from 'prettier'
+
 export default {
   semi: false,
   singleQuote: true,
   printWidth: 100,
-}
+} satisfies Config

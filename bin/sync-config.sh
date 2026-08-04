@@ -71,18 +71,18 @@ case "$stack" in
     ;;
   vue)
     files=(
-      configs/js/eslint.config.base.js
-      configs/js/prettier.config.base.js
-      configs/js/oxlint.config.base.json
+      configs/ts/eslint.config.base.ts
+      configs/ts/prettier.config.base.ts
+      configs/ts/oxlint.config.base.json
     )
     ;;
   fullstack)
     files=(
       configs/php/pint.json
       configs/php/rector-base.php
-      configs/js/eslint.config.base.js
-      configs/js/prettier.config.base.js
-      configs/js/oxlint.config.base.json
+      configs/ts/eslint.config.base.ts
+      configs/ts/prettier.config.base.ts
+      configs/ts/oxlint.config.base.json
     )
     ;;
   *)

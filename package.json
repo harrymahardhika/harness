@@ -1,0 +1,12 @@
+{
+  "name": "harness",
+  "private": true,
+  "description": "Local tooling for the harness repo itself (currently just Markdown formatting).",
+  "scripts": {
+    "format:md": "prettier --write \"**/*.md\"",
+    "format:md:check": "prettier --check \"**/*.md\""
+  },
+  "devDependencies": {
+    "prettier": "^3.8.3"
+  }
+}

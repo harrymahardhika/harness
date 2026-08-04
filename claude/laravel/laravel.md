@@ -94,6 +94,7 @@ on action classes. Authorization is:
        ]);
    }
    ```
+
    This applies Spatie Permission's `permission:` route middleware per
    method — every domain controller needs this in its constructor; a
    controller with no `requiresPermissions()` call is a red flag, not an
@@ -102,6 +103,7 @@ on action classes. Authorization is:
 2. **Inline row/field-level checks**, using `$user->can()` directly
    against the same `Permission` enum, for authorization that can't be
    expressed as a blanket per-method rule:
+
    ```php
    abort_if($authUser->isNot($user) && ! $authUser->can(Permission::EDIT_USER->value), 403);
    ```

@@ -10,7 +10,7 @@ README for the exact import syntax.
 - Use Conventional Commits: `type(scope): summary`, e.g. `fix(auth): reject expired tokens`.
   Common types: `feat`, `fix`, `refactor`, `test`, `chore`, `docs`, `perf`.
 - Summary line is imperative mood, no trailing period, ideally under 72 chars.
-- Body (when needed) explains *why*, not just *what* — the diff already shows what changed.
+- Body (when needed) explains _why_, not just _what_ — the diff already shows what changed.
 - Never mention Claude/AI authorship in the commit body text itself; use the
   trailer instead:
   ```

@@ -20,7 +20,7 @@ file for the area you're testing already exists.
 **Gherkin-informed: only when a `.feature` file exists for this area.**
 One project (`analytics-api`) writes Gherkin `.feature` files as living
 documentation alongside a `todo.md`, not (yet) as a direct scenario-to-test
-mapping — treat a `.feature` file there as authoritative *intent* to test
+mapping — treat a `.feature` file there as authoritative _intent_ to test
 against, not a literal step-by-step script to transliterate. If a project
 later does want 1:1 scenario→test mapping, ask before assuming that's the
 goal here too.
