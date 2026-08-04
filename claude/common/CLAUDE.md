@@ -25,8 +25,12 @@ README for the exact import syntax.
 ## Testing-Before-Done Gates
 
 - A task is not "done" until its tests pass. Never report a feature/fix as
-  complete without having run the relevant test suite (Pest for PHP,
-  Vitest for Vue/TS) and shown the passing output.
+  complete without having run the relevant tests (Pest for PHP, Vitest for
+  Vue/TS) and shown the passing output.
+- Prefer running only the test(s) relevant to the change being made (a
+  single file, class, or `--filter`). Do not run the full test suite
+  unless explicitly asked to — it's slow and mostly re-confirms unrelated
+  code.
 - `.feature` files are living documentation in some projects (e.g.
   `analytics-api`, alongside `todo.md`), not a required source of Pest
   tests in every project — most projects in this stack (e.g. `vindo-api`)
