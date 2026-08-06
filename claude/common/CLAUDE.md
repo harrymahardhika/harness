@@ -16,9 +16,10 @@ README for the exact import syntax.
   ```
   Co-Authored-By: Claude <noreply@anthropic.com>
   ```
-- Only commit or push when the user asks. If working on the repo's default
-  branch and a commit is requested, create a feature branch first unless
-  told otherwise.
+- Only commit or push when the user asks. Do not create a feature branch
+  on your own initiative — including when a commit is requested while on
+  the repo's default branch. Stay on the current branch unless the user
+  explicitly asks you to create or switch branches.
 - Never `git commit --amend` or force-push over commits you didn't just
   create in this session without explicit confirmation.
 
@@ -70,3 +71,12 @@ README for the exact import syntax.
   Y — let me know if that's wrong") rather than staying silent about it.
 - Never guess at business logic (pricing, permissions, financial
   calculations) — always ask.
+
+## Expensive Tools: Explicit Invocation Only
+
+- `claude-in-chrome` (browser control) burns credits disproportionately.
+  Never reach for it as a default or convenience option. Only use it when
+  the user explicitly asks for it by name or unambiguously asks for live
+  browser interaction/automation that no other tool can satisfy.
+- Prefer `WebFetch`, reading local files, or asking the user to check
+  something manually before considering it.

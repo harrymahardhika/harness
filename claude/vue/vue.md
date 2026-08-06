@@ -99,6 +99,14 @@ Pinia, pnpm-managed).
   New composables should still use `useX` for both the filename and the
   exported function.
 
+## Test Location
+
+- Tests live under a top-level `tests/` directory (e.g. `tests/components/`,
+  `tests/composables/`, mirroring the `src/` structure), not colocated
+  next to the source file. Don't create `Component.spec.ts` /
+  `Component.test.ts` alongside `Component.vue` — put it under `tests/`
+  instead.
+
 ## API Communication
 
 - No axios. HTTP goes through `@vueuse/core`'s `useFetch`, wrapped in
@@ -107,7 +115,13 @@ Pinia, pnpm-managed).
   classes extending a base `Api` class (`get`, `paginate`, `show`,
   `store`, `update`, `destroy`, `pdf`), each exported as a singleton
   (`export default new TicketApi()`).
-- Domain types are hand-maintained as global ambient declarations in
-  `src/types.d.ts` (not colocated per-feature, no import needed) — add
-  new domain types there rather than starting a parallel per-file
-  convention.
+
+## Type Declarations
+
+- All domain/shared types are hand-maintained as global ambient
+  declarations in `src/types.d.ts` (not colocated per-feature, no import
+  needed). Don't declare a domain `interface`/`type` inline in a
+  component or composable, and don't start a parallel per-file
+  convention (e.g. a `types.ts` next to a feature) — add it to
+  `types.d.ts` instead. Purely local, non-reusable shapes (e.g. a
+  one-off prop-destructuring helper type) are the only exception.
