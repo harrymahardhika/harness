@@ -1,7 +1,7 @@
 # harness
 
 A personal, reusable set of Claude Code configuration, agent definitions,
-and quality-tool configs — pulled into individual projects, the same way
+and quality-tool configs. Pull it into individual projects the same way
 [dotfiles](https://github.com/) get managed with GNU Stow. Stack target:
 Laravel (API-only, action-class architecture), Vue 3 (Composition API),
 Tailwind, PostgreSQL, Meilisearch, Spatie packages, Forge, Horizon.
@@ -26,9 +26,9 @@ harness/
 ## 1. Wiring a project's `CLAUDE.md` with `@imports`
 
 Claude Code supports `@path/to/file` imports inside `CLAUDE.md`. Point a
-project's own `CLAUDE.md` back at this repo instead of copy-pasting rules.
-Clone or symlink this repo somewhere stable (e.g. `~/Code/harness`), then
-in the project:
+project's own `CLAUDE.md` back at this repo instead of copy-pasting
+rules. Clone or symlink this repo somewhere stable (for example
+`~/Code/harness`). Then, in the project:
 
 ```markdown
 # CLAUDE.md
@@ -40,26 +40,27 @@ in the project:
 ## Project-specific notes
 
 Anything that only makes sense for *this* project goes here, below the
-imports — e.g. domain vocabulary, deploy quirks, feature flags.
+imports. For example: domain vocabulary, deploy quirks, feature flags.
 ```
 
-Imports resolve relative to the importing file or `~`, so an absolute
+Imports resolve relative to the importing file or `~`. An absolute
 `~/Code/harness/...` path works regardless of where the project itself
 lives on disk. `laravel.md` and `vue.md` carry `paths:` frontmatter
-scoping them to matching files, so they only apply when Claude is
-actually touching `.php` or `.vue`/`resources/js/**/*.ts` files.
+scoping them to matching files. They only apply when Claude is actually
+touching `.php` or `.vue`/`resources/js/**/*.ts` files.
 
-If you'd rather vendor the harness into the project (e.g. for a
-teammate who hasn't cloned it separately), use a relative path to a
-git submodule or `sync-config.sh`'d copy instead — see §2/§3 below.
+If you would rather vendor the harness into the project (for example for
+a teammate who has not cloned it separately), use a relative path to a
+git submodule or `sync-config.sh`'d copy instead. See §2/§3 below.
 
 ## 2. Syncing configs with `bin/sync-config.sh`
 
-Copies a chosen subset of `configs/` into `<target>/harness/configs/...`,
-tracking what it last wrote via `.harness-sync-manifest.json` in the
-target project. If a previously-synced file has been edited locally
-since, it's skipped with a warning instead of being clobbered; anything
-it does overwrite gets backed up to `<file>.bak` first.
+Copies a chosen subset of `configs/` into
+`<target>/harness/configs/...`, tracking what it last wrote via
+`.harness-sync-manifest.json` in the target project. If a
+previously-synced file has been edited locally since, skip it with a
+warning instead of clobbering it. Back up anything it does overwrite to
+`<file>.bak` first.
 
 ```bash
 # from this repo
@@ -79,7 +80,7 @@ return RectorConfig::configure()
 ```
 
 ```ts
-// eslint.config.ts — copy harness/configs/ts/oxlint.config.base.json to
+// eslint.config.ts - copy harness/configs/ts/oxlint.config.base.json to
 // .oxlintrc.json first (eslint-plugin-oxlint reads it from the project root)
 import harnessBase from './harness/configs/ts/eslint.config.base.ts'
 
@@ -87,14 +88,14 @@ export default [...harnessBase, { rules: { /* project overrides */ } }]
 ```
 
 Requires `jq` on PATH. Re-run the sync any time this repo's configs
-change; commit the resulting `harness/` copy and manifest in the target
+change. Commit the resulting `harness/` copy and manifest in the target
 project so teammates get the same baseline without needing this repo
 cloned separately.
 
 ## 3. Symlinking agents and hooks into a project's `.claude/`
 
-Subagent definitions and the destructive-command hook are meant to be
-symlinked, not copied, so updates here propagate immediately:
+Symlink subagent definitions and the destructive-command hook, do not
+copy them. Updates here propagate immediately:
 
 ```bash
 cd /path/to/project
@@ -103,14 +104,14 @@ ln -s ~/Code/harness/claude/agents/laravel-reviewer.md .claude/agents/laravel-re
 ln -s ~/Code/harness/claude/agents/test-writer.md .claude/agents/test-writer.md
 
 # hooks/settings.json wires a PreToolUse hook; merge its "hooks" key into
-# the project's own .claude/settings.json (Claude Code doesn't merge
+# the project's own .claude/settings.json (Claude Code does not merge
 # multiple settings.json files automatically), and symlink the guard
 # script itself so the hook command resolves:
 mkdir -p .claude
 ln -s ~/Code/harness/hooks/guard-destructive-bash.sh .claude/guard-destructive-bash.sh
 ```
 
-If the project's `.claude/settings.json` doesn't exist yet, you can
+If the project's `.claude/settings.json` does not exist yet, you can
 symlink `hooks/settings.json` directly as a starting point:
 
 ```bash
@@ -119,21 +120,21 @@ ln -s ~/Code/harness/hooks/settings.json .claude/settings.json
 
 If it already has other settings, copy the `hooks.PreToolUse` array from
 `hooks/settings.json` into it by hand instead of symlinking the whole
-file — otherwise you'll clobber the project's own settings.
+file. Otherwise you will clobber the project's own settings.
 
 ## Agents
 
-- **`laravel-reviewer`** — reviews a diff/PR for N+1 queries and
+- **`laravel-reviewer`** reviews a diff/PR for N+1 queries and
   action-class architecture violations (stray Policies, missing
   `canX()` gates, business logic leaking into controllers/jobs).
-- **`test-writer`** — turns Gherkin `.feature` files into Pest tests,
+- **`test-writer`** turns Gherkin `.feature` files into Pest tests,
   one test per scenario, run against the actual implementation (never
   invents the API shape).
 
 ## Updating this repo
 
-This repo is plain git — no Stow involved (Stow is for the separate
+This repo is plain git. No Stow involved (Stow is for the separate
 `dotfiles` repo). Edit, commit, and re-run `sync-config.sh` in
-consuming projects to pick up config changes; `@import`ed `CLAUDE.md`
-files and symlinked agents/hooks pick up edits immediately, no sync
-step needed.
+consuming projects to pick up config changes. `@import`ed `CLAUDE.md`
+files and symlinked agents/hooks pick up edits immediately. No sync step
+needed.
