@@ -116,61 +116,19 @@ methods** on action classes. Authorize with the two mechanisms below.
    Action class itself. See above. Do not put business-rule branching in
    the controller or the permission check.
 
-`Permission` enums are backed PHP enums, one per domain
-(`App\Domains\{Domain}\Enums\Permission`). Their values are the Spatie
-Permission names.
+`Permission` enums are backed PHP enums, one per domain. See the
+project's `.claude/rules/permissions.md` for where roles/permissions
+live and how they're synced.
 
 ## Repository + Criteria (not Spatie Query Builder)
 
-This stack does not use `spatie/laravel-query-builder`. Handle
-filtering/sorting through a hand-rolled Repository + Criteria pair from
-`harrym/domain-support`:
-
-```php
-final class TicketCriteria extends AbstractCriteria
-{
-    public function __construct(
-        ?string $search = null, ?string $sort_column = null, ?string $sort_order = null,
-        ?int $per_page = null, ?int $limit = null,
-        public ?string $status = null,
-        public ?string $priority = null,
-        public ?int $requester_id = null,
-    ) {
-        parent::__construct($search, $sort_column, $sort_order, $per_page, $limit);
-    }
-}
-
-final class TicketRepository extends AbstractRepository
-{
-    protected string $model = Ticket::class;
-    protected ?array $searchableColumns = ['subject', 'number'];
-    protected ?array $with = ['requester', 'assignee'];
-    protected bool $useScout = true;
-
-    public function status(string $status): static
-    {
-        $this->query->where('status', $status);
-        return $this;
-    }
-
-    public function priority(string $priority): static { /* ... */ return $this; }
-}
-```
-
-- `Criteria` is a plain DTO of allowed filter/sort params. Construct the
-  `Repository` with it (`new TicketRepository(TicketCriteria::from($request))`).
-  `AbstractRepository::makeQuery()` reflects over the criteria to call
-  the matching method (camelCased) if one exists.
-- Every allowed filter is an explicit method on the repository. This is
-  the same discipline as Query Builder's `allowedFilters()`, just
-  hand-written. Adding a filterable column means adding a method, not
-  opening the query up generically.
-- Declare `$with` once on the repository so eager loading is not
-  scattered across call sites. Check it before adding a new relation
-  access in a Resource/serializer.
-- Set `$searchableColumns` and `$useScout` when the domain is
-  Meilisearch-indexed. The repository's `search()` picks Scout vs. a
-  Postgres `ilike`/`LOWER() LIKE` fallback automatically.
+This stack does not use `spatie/laravel-query-builder`. Filtering/sorting
+goes through a hand-rolled Repository + Criteria pair from
+`harrym/domain-support` — see the project's
+`.claude/rules/repositories.md` for the field-to-method wiring
+convention. Set `$searchableColumns` and `$useScout` on the repository
+when the domain is Meilisearch-indexed; `search()` picks Scout vs. a
+Postgres `ilike`/`LOWER() LIKE` fallback automatically.
 
 ## PostgreSQL Conventions
 
@@ -230,94 +188,31 @@ final class TicketRepository extends AbstractRepository
 
 ## Testing
 
-### Do Not Duplicate HTTP Coverage in Unit Tests
+Project-local test conventions (Pest setup, factories,
+`createUser()` patterns, running tests) live in the project's
+`.claude/rules/testing.md`. The rules below are cross-project and don't
+belong to one path glob:
 
-- If an HTTP/feature test already exercises a code path end-to-end
-  (controller → Action → Repository → response), do not also write a Unit
-  test that re-covers the same behavior. It is redundant coverage that
-  doubles maintenance cost without catching anything new.
-- Write a Unit test only when the HTTP test genuinely cannot reach the
-  thing you are testing:
-  - Logic isolated enough that an HTTP round-trip is the wrong tool for
-    it. For example: a value object, a DTO transform, a state-machine
-    edge case, a helper/formatter. Asserting the narrow behavior
-    directly is clearer than inferring it from a response body.
-  - The scenario needs mocking/faking (`Http::fake()`, `Queue::fake()`,
-    `Bus::fake()`, `Notification::fake()`, a mocked external service or
-    time) to isolate from a dependency an HTTP test would otherwise hit
-    for real, or to assert something was dispatched/called rather than
-    its downstream effect.
-- When in doubt, check whether an existing Feature test already covers
-  the path before adding a new Unit test. Do not assume one is missing
-  without looking.
-
-### Test Suite Setup
-
-- Use Pest for the test suite. Put feature tests under `tests/Feature/`
-  and unit tests under `tests/Unit/`.
-- Use `RefreshDatabase` with SQLite `:memory:` for the test database.
-  `phpunit.xml` `<env>` values win over `.env.testing` (which points at
-  pgsql/redis). Do not treat `.env.testing`'s connection settings as
-  the ones actually in effect during a test run.
-- Migrate the schema once per test process, not once per test. Each
-  test then runs inside a transaction that rolls back at teardown.
-- Define factories in `database/factories/`. Models use the `#[Table]`
-  and `#[Fillable]` attributes.
-
-### Seed roles and permissions once per process
-
-A `createUser(attributes?, role?, permissions?)` test helper that calls
-`assignRole()` / `givePermissionTo()` requires role and permission rows
-to already exist in the database. An `app:rebuild-roles-and-permissions`
-command (or equivalent) makes those rows from the `Role`/`Permission`
-enums.
-
-Do not run that rebuild command in a Pest `beforeEach`. At roughly 150
-queries per invocation, running it per test (hundreds of tests) adds
-minutes to the suite.
-
-Run it once per test process instead, hooked into the migration step:
-
-- Apply `RefreshDatabase` directly in `tests/TestCase.php` (not through
-  `pest()->use()`), alias the trait's `migrateDatabases` method, and run
-  the rebuild command right after `migrate:fresh`.
-- `RefreshDatabase::refreshTestDatabase()` caches the in-memory PDO
-  connection after `migrateDatabases()` returns. The seeded roles
-  become part of the committed baseline every test rolls back to. Every
-  test still sees roles and permissions; nothing leaks between tests.
-
-Do not run the rebuild command inside `refreshTestDatabase()` after
-`beginDatabaseTransaction()`. That inserts the rows inside the first
-test's own transaction, and they roll back at that test's teardown,
-leaving every later test without roles and permissions.
-
-### Common test patterns
-
-- Build the permission array and pass it to `createUser()` for
-  authorized tests:
-  ```php
-  $user = createUser(permissions: [Permission::READ_TICKET->value]);
-  ```
-- Assign a role when the test exercises role-based behavior:
-  ```php
-  $user = createUser(role: Role::TECHNICIAN->value, permissions: [...]);
-  ```
-- Feature tests hit the HTTP route end-to-end (controller → Action →
-  Repository → response), matching the `requiresPermissions()`
-  constructor gate under test.
-- Assert JSON responses with `assertJsonPath()`. Assert domain logic
-  (state transitions, number generation, DTO transforms) in unit tests.
-- Fake external calls with `Http::fake()` (for example WAHA) and
-  `Notification::fake()` (notification channels).
-
-### Running tests
-
-- `php artisan test --compact` runs the full suite.
-- `php artisan test --compact --filter=testName` runs a focused subset.
-- `php artisan test --compact tests/Feature/Domains/Ticket/Controllers/TicketControllerTest.php`
-  runs one file.
-- Run only the tests relevant to the change in progress. Reserve the
-  full suite for before merge or CI.
+- **Do not duplicate HTTP coverage in Unit tests.** If a Feature test
+  already exercises a path end-to-end (controller → Action →
+  Repository → response), don't also write a Unit test for the same
+  behavior. Write a Unit test only when an HTTP round-trip is the wrong
+  tool: isolated logic (value object, DTO transform, state-machine edge
+  case), or a scenario that needs `Http::fake()` / `Queue::fake()` /
+  `Bus::fake()` / `Notification::fake()` / mocked time to isolate a
+  dependency or assert dispatch rather than downstream effect. Check
+  for existing Feature coverage before assuming a Unit test is missing.
+- **Seed roles/permissions once per test process, not per test.** A
+  `createUser()` helper needs role/permission rows to already exist.
+  Run the rebuild command once, right after `migrate:fresh` inside
+  `RefreshDatabase`'s `migrateDatabases()` — never in a Pest
+  `beforeEach` (~150 queries × hundreds of tests adds minutes) and
+  never inside `refreshTestDatabase()` after
+  `beginDatabaseTransaction()` (rolls back after the first test, leaving
+  every later test without roles).
+- `phpunit.xml` `<env>` values win over `.env.testing`; don't treat
+  `.env.testing`'s pgsql/redis settings as what's actually in effect
+  during a test run.
 
 ## Code Style Enforcement
 

@@ -5,6 +5,33 @@ These rules apply to every project regardless of stack. Import them via
 to this repo) from each project's own `CLAUDE.md`. See the harness README
 for the exact import syntax.
 
+## Communication Style
+
+- Always talk in concise technical English and say only what needs to be
+  said, without dropping precise technical terms (framework names,
+  protocol terms, error names). Report only the elements needed for the
+  user to make the right decisions, explained clearly.
+- Lead with the answer. No preamble.
+- State each objection once. If the user says proceed, execute without
+  repeating it.
+
+## Model & Effort Routing
+
+- Route grunt work (mechanical edits, boilerplate, one-file formatting
+  fixes, running/reading test output) to a cheaper model or a
+  lower-effort subagent rather than the main thread's full effort. Route
+  hard decisions (architecture, ambiguous requirements, cross-file
+  refactors, anything the Ambiguous Requirements rule says to ask about)
+  to the main thread at full effort.
+- Before switching to a smaller/cheaper model mid-session for a batch of
+  grunt work, drop effort first (`/effort low`) rather than assuming the
+  model swap alone is enough.
+- Suggest `/clear` when the user is about to start a new, unrelated task
+  in the same session — stale context from the prior task is pure cost
+  from that point on. Suggest `/compact` when staying mid-task but the
+  session has grown long. Suggesting is enough; only the user can invoke
+  either.
+
 ## Commit Message Conventions
 
 - Use Conventional Commits: `type(scope): summary`. For example:
