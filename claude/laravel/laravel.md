@@ -179,6 +179,10 @@ final class TicketRepository extends AbstractRepository
 - Define foreign keys with `$table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();`
   Use Laravel's `foreignId()`/`constrained()` helpers, with the `_id`
   suffix.
+- **Postgres does not auto-index foreign keys** (unlike MySQL). Add an
+  explicit `$table->index('user_id')` (or fold it into
+  `foreignId()->constrained()->index()` chaining) for every foreign key
+  column, or joins/lookups on it will full-scan.
 - Prefix boolean columns with `is_` (for example `is_blocked`). Cast
   them to `'boolean'` in the model's `casts()`.
 - **Never put boolean fields in `$fillable`** (not even in a
@@ -224,7 +228,9 @@ final class TicketRepository extends AbstractRepository
   above). File/attachment handling is a custom domain model
   (`app/Domains/Attachment/*`), not Media Library.
 
-## Testing: Do Not Duplicate HTTP Coverage in Unit Tests
+## Testing
+
+### Do Not Duplicate HTTP Coverage in Unit Tests
 
 - If an HTTP/feature test already exercises a code path end-to-end
   (controller → Action → Repository → response), do not also write a Unit
@@ -244,6 +250,74 @@ final class TicketRepository extends AbstractRepository
 - When in doubt, check whether an existing Feature test already covers
   the path before adding a new Unit test. Do not assume one is missing
   without looking.
+
+### Test Suite Setup
+
+- Use Pest for the test suite. Put feature tests under `tests/Feature/`
+  and unit tests under `tests/Unit/`.
+- Use `RefreshDatabase` with SQLite `:memory:` for the test database.
+  `phpunit.xml` `<env>` values win over `.env.testing` (which points at
+  pgsql/redis). Do not treat `.env.testing`'s connection settings as
+  the ones actually in effect during a test run.
+- Migrate the schema once per test process, not once per test. Each
+  test then runs inside a transaction that rolls back at teardown.
+- Define factories in `database/factories/`. Models use the `#[Table]`
+  and `#[Fillable]` attributes.
+
+### Seed roles and permissions once per process
+
+A `createUser(attributes?, role?, permissions?)` test helper that calls
+`assignRole()` / `givePermissionTo()` requires role and permission rows
+to already exist in the database. An `app:rebuild-roles-and-permissions`
+command (or equivalent) makes those rows from the `Role`/`Permission`
+enums.
+
+Do not run that rebuild command in a Pest `beforeEach`. At roughly 150
+queries per invocation, running it per test (hundreds of tests) adds
+minutes to the suite.
+
+Run it once per test process instead, hooked into the migration step:
+
+- Apply `RefreshDatabase` directly in `tests/TestCase.php` (not through
+  `pest()->use()`), alias the trait's `migrateDatabases` method, and run
+  the rebuild command right after `migrate:fresh`.
+- `RefreshDatabase::refreshTestDatabase()` caches the in-memory PDO
+  connection after `migrateDatabases()` returns. The seeded roles
+  become part of the committed baseline every test rolls back to. Every
+  test still sees roles and permissions; nothing leaks between tests.
+
+Do not run the rebuild command inside `refreshTestDatabase()` after
+`beginDatabaseTransaction()`. That inserts the rows inside the first
+test's own transaction, and they roll back at that test's teardown,
+leaving every later test without roles and permissions.
+
+### Common test patterns
+
+- Build the permission array and pass it to `createUser()` for
+  authorized tests:
+  ```php
+  $user = createUser(permissions: [Permission::READ_TICKET->value]);
+  ```
+- Assign a role when the test exercises role-based behavior:
+  ```php
+  $user = createUser(role: Role::TECHNICIAN->value, permissions: [...]);
+  ```
+- Feature tests hit the HTTP route end-to-end (controller → Action →
+  Repository → response), matching the `requiresPermissions()`
+  constructor gate under test.
+- Assert JSON responses with `assertJsonPath()`. Assert domain logic
+  (state transitions, number generation, DTO transforms) in unit tests.
+- Fake external calls with `Http::fake()` (for example WAHA) and
+  `Notification::fake()` (notification channels).
+
+### Running tests
+
+- `php artisan test --compact` runs the full suite.
+- `php artisan test --compact --filter=testName` runs a focused subset.
+- `php artisan test --compact tests/Feature/Domains/Ticket/Controllers/TicketControllerTest.php`
+  runs one file.
+- Run only the tests relevant to the change in progress. Reserve the
+  full suite for before merge or CI.
 
 ## Code Style Enforcement
 
